@@ -1,0 +1,320 @@
+import pygame
+import random
+import os
+
+fullscreen = True
+square = False
+rando = True
+pixlesx = 16
+FPS = 6
+brightness = 50
+xscreen = 900
+yscreen = 900
+pixlesy = int((pixlesx/xscreen)*yscreen)
+# pixlesy =
+simulate = False
+border = 3
+smooth = True
+
+
+class Tile:
+   def __init__(self):
+       self.r = 30 * (100//brightness)
+       self.g = 30 * (100//brightness)
+       self.b = 30 * (100//brightness)
+       self.type = "none"
+       self.targets = []
+       self.probs =   []
+
+
+class Black(Tile):
+   def __init__(self):
+       self.r = 0
+       self.g = 0
+       self.b = 0
+       self.type = "black"
+       self.targets = []
+       self.probs  =  []
+
+
+class Red(Tile):
+   def __init__(self):
+       self.r = 255
+       self.g = 0
+       self.b = 0
+       self.type = "red"
+       self.targets = ["none", "orange"]
+       self.probs  =  [100, 100, 100]
+
+
+class Orange(Tile):
+   def __init__(self):
+       self.r = 255
+       self.g = 128
+       self.b = 0
+       self.type = "orange"
+       self.targets = ["none", "yellow"]
+       self.probs  =  [100, 100]
+
+
+class Yellow(Tile):
+   def __init__(self):
+       self.r = 255
+       self.g = 255
+       self.b = 0
+       self.type = "yellow"
+       self.targets = ["none", "green"]
+       self.probs  =  [100, 100]
+
+
+class Green(Tile):
+   def __init__(self):
+       self.r = 0
+       self.g = 255
+       self.b = 0
+       self.type = "green"
+       self.targets = ["none", "cyan"]
+       self.probs  =  [100, 100, 100]
+
+
+class Cyan(Tile):
+   def __init__(self):
+       self.r = 0
+       self.g = 255
+       self.b = 255
+       self.type = "cyan"
+       self.targets = ["none", "blue"]
+       self.probs  =  [100, 100]
+
+
+class Blue(Tile):
+   def __init__(self):
+       self.r = 0
+       self.g = 0
+       self.b = 255
+       self.type = "blue"
+       self.targets = ["none", "purple"]
+       self.probs  =  [100, 100]
+
+
+class Purple(Tile):
+   def __init__(self):
+       self.r = 180
+       self.g = 0
+       self.b = 255
+       self.type = "purple"
+       self.targets = ["none", "magenta"]
+       self.probs  =  [100, 100]
+
+
+class Magenta(Tile):
+   def __init__(self):
+       self.r = 255
+       self.g = 0
+       self.b = 255
+       self.type = "magenta"
+       self.targets = ["none", "red"]
+       self.probs  =  [100, 100]
+
+
+def clearBoard():
+    global tiles, reaction, winners
+    tiles = []
+    if rando:
+        for i in range(pixlesx):
+            tiles.append([colors[random.randint(0,8)] for i in range(pixlesy)])
+    else:
+        for i in range(pixlesx):
+            tiles.append([colors[0] for i in range(pixlesy)])
+    reaction = [[[] for i in range(pixlesy)] for i in range(pixlesx)]
+    winners = []
+
+pixoffset = 0
+
+FPSc = FPS
+os.environ['SDL_VIDEO_CENTERED'] = '1'
+pygame.init()
+screen = pygame.display.set_mode((xscreen+border, yscreen+border))
+
+if fullscreen:
+    xscreen = 1920
+    yscreen = 1080
+    pixlesy = int((pixlesx/1920)*1080)
+    screen = pygame.display.set_mode((xscreen, yscreen), pygame.FULLSCREEN)
+offset = 0
+pixlex = xscreen // pixlesx
+pixley = yscreen // pixlesy
+if square:
+    pixlesy = pixlesx
+    pixlex = yscreen // pixlesx
+    pixley = pixlex
+    offset = (xscreen-pixlesx*pixlex)//2
+
+clock = pygame.time.Clock()
+pygame.display.set_caption("Rock Paper Scissors")
+cColor = 0
+frame = 0
+mouse = True
+pygame.mouse.set_visible(mouse)
+tiles = []
+reaction = []
+mousedown = False
+
+def battle(c0, c1, c2=None, c3=None, c4=None):
+    fighter0 = {"name": c0, "prob": 1}
+    fighter1 = {"name": c1, "prob": 0}
+    fighter2 = {"name": c2, "prob": 0}
+    fighter3 = {"name": c3, "prob": 0}
+    fighter4 = {"name": c4, "prob": 0}
+    fighters = [fighter1, fighter2, fighter3, fighter4]
+    fightercopy = []
+    for fighter in fighters:
+        if fighter["name"] != None: fightercopy.append(fighter)
+    fighters = fightercopy.copy()
+    for fighter in fighters:
+        i = 0
+        for color in fighter["name"].targets:
+            if color == c0.type: break
+            i += 1
+        if i < len(fighter["name"].probs): fighter["prob"] = fighter["name"].probs[i]
+
+
+    for fighter in fighters:
+        fighter0["prob"] *= (1-fighter["prob"]/100)
+    fighter0["prob"] = int(fighter0["prob"]*100)
+    fighters.append(fighter0)
+
+    totalprob = sum([fighter["prob"] for fighter in fighters])
+    if totalprob != 0:
+        randonum = random.randint(1,totalprob)
+        offset = 0
+        winner = fighter0["name"]
+        for fighter in fighters:
+            winner = fighter
+            if randonum <= fighter["prob"]+offset: break
+            offset += fighter["prob"]
+    if totalprob == 0 or len(fighters) == 0: return None
+    return winner["name"]
+
+
+colors = [Tile(), Red(), Orange(), Yellow(), Green(), Cyan(), Blue(), Purple(), Magenta(), Black()]
+
+
+clearBoard()
+outlines = []
+for i in range(pixlesx):
+    outlines.append([False for i in range(pixlesy)])
+outline = False
+brightnessc = brightness
+winners = []
+running = True
+while running:
+    keys = pygame.key.get_pressed()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.MOUSEBUTTONDOWN: mousedown = True
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE: simulate = not simulate
+            if event.key == pygame.K_EQUALS and 60//(FPSc*1.1) != 0:
+                FPSc *= 1.1
+                print(FPSc)
+            if event.key == pygame.K_MINUS:
+                FPSc //= 1.1
+                print(FPSc)
+            if event.key == pygame.K_n: cColor = 0
+            if event.key == pygame.K_r: cColor = 1
+            if event.key == pygame.K_g: cColor = 4
+            if event.key == pygame.K_b: cColor = 6
+            if event.key == pygame.K_y: cColor = 3
+            if event.key == pygame.K_m: cColor = 8
+            if event.key == pygame.K_c: cColor = 5
+            if event.key == pygame.K_o: cColor = 2
+            if event.key == pygame.K_p: cColor = 7
+            if event.key == pygame.K_e: cColor = 9
+            if event.key == pygame.K_s: smooth = not smooth
+            if event.key == pygame.K_x: outline = not outline
+            if event.key == pygame.K_w: rando = not rando
+            if event.key == pygame.K_q: square = not square
+
+            if event.key == pygame.K_DELETE:
+                outlines = []
+                for i in range(pixlesx):
+                    outlines.append([False for i in range(pixlesy)])
+            if event.key == pygame.K_RETURN:
+                mouse = not mouse
+                pygame.mouse.set_visible(mouse)
+            if event.key == pygame.K_ESCAPE: clearBoard()
+        if FPSc == 0: FPSc = 1.05
+    screen.fill((0,0,0))
+    if keys[pygame.K_MINUS] and keys[pygame.K_EQUALS]: FPSc = FPS
+    mouseTile = ((pygame.mouse.get_pos()[0]-offset) // pixlex, pygame.mouse.get_pos()[1] // pixley)
+    if mousedown and outline and pygame.mouse.get_pos()[0] < xscreen-border and pygame.mouse.get_pos()[1] < yscreen-border: outlines[mouseTile[0]][mouseTile[1]] = not outlines[mouseTile[0]][mouseTile[1]]
+    if pygame.mouse.get_pressed()[0] and not outline and pygame.mouse.get_pos()[0] < xscreen-border and pygame.mouse.get_pos()[1] < yscreen-border: tiles[mouseTile[0]][mouseTile[1]] = colors[cColor]
+    x = 0
+    for column in tiles:
+        y = 0
+        for tile in column:
+            if outlines[x][y]: pygame.draw.rect(screen, (255, 255, 255),(x * pixlex +offset, y * pixley, pixlex+border, pixley+border))
+            pygame.draw.rect(screen, (tile.r*brightness//100, tile.g*brightness//100, tile.b*brightness//100),(x * pixlex + border+offset, y * pixley + border, pixlex - border, pixley - border))
+            y += 1
+        x += 1
+
+
+    if simulate and frame%(60//FPSc) == 0:
+        winners = []
+        brightnessc = 0
+        x = 0
+        for column in tiles:
+            y = 0
+            for tile in column:
+                if x != pixlesx-1:
+                    if tiles[x+1][y].type in tile.targets: reaction[x+1][y].append(tile)
+                if x != 0:
+                    if tiles[x-1][y].type in tile.targets: reaction[x-1][y].append(tile)
+                if y != 0:
+                    if tiles[x][y-1].type in tile.targets: reaction[x][y-1].append(tile)
+                if y != pixlesy-1:
+                    if tiles[x][y+1].type in tile.targets: reaction[x][y+1].append(tile)
+                y += 1
+            x += 1
+
+        x = 0
+        for column in reaction:
+            y = 0
+            for tile in column:
+                if tile != []:
+                    winner = None
+                    c1 = tiles[x][y]
+                    if len(tile) == 1: winner = battle(c1, tile[0])
+                    elif len(tile) == 2: winner = battle(c1, tile[0], tile[1])
+                    elif len(tile) == 3: winner = battle(c1, tile[0], tile[1], tile[2])
+                    elif len(tile) == 4: winner = battle(c1, tile[0], tile[1], tile[2], tile[3])
+                    if winner != None:
+                        tiles[x][y] = winner
+                        winners.append((c1, x, y, winner))
+
+                y += 1
+            x += 1
+
+        reaction = [[[] for i in range(pixlesy)] for i in range(pixlesx)]
+    if smooth:
+        for tupe in winners:
+            c1, x, y, winner = tupe
+            wr = winner.r * brightnessc/brightness
+            wg = winner.g * brightnessc/brightness
+            wb = winner.b * brightnessc/brightness
+            lr = c1.r * (brightness-brightnessc)/brightness
+            lg = c1.g * (brightness-brightnessc)/brightness
+            lb = c1.b * (brightness-brightnessc)/brightness
+            pygame.draw.rect(screen, ((lr+wr)*brightness//100, (lg+wg)*brightness//100, (lb+wb)*brightness//100),
+                             (x * pixlex + border+offset, y * pixley + border, pixlex - border, pixley - border))
+
+        if brightnessc < brightness: brightnessc += FPSc*2
+        if brightnessc > brightness: brightnessc = brightness
+    pygame.display.flip()
+    frame += 1
+    mousedown = False
+    if frame == 32767: frame = 1
+    clock.tick(60)
+pygame.quit()
