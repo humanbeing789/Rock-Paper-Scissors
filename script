@@ -6,7 +6,7 @@ fullscreen = True
 square = False
 rando = True
 pixlesx = 16
-FPS = 6
+FPS = 60
 brightness = 50
 xscreen = 900
 yscreen = 900
@@ -137,8 +137,8 @@ pygame.init()
 screen = pygame.display.set_mode((xscreen+border, yscreen+border))
 
 if fullscreen:
-    xscreen = 1920
-    yscreen = 1080
+    xscreen = 1921
+    yscreen = 1079
     pixlesy = int((pixlesx/1920)*1080)
     screen = pygame.display.set_mode((xscreen, yscreen), pygame.FULLSCREEN)
 offset = 0
@@ -222,16 +222,16 @@ while running:
             if event.key == pygame.K_MINUS:
                 FPSc //= 1.1
                 print(FPSc)
-            if event.key == pygame.K_n: cColor = 0
-            if event.key == pygame.K_r: cColor = 1
-            if event.key == pygame.K_g: cColor = 4
-            if event.key == pygame.K_b: cColor = 6
-            if event.key == pygame.K_y: cColor = 3
-            if event.key == pygame.K_m: cColor = 8
-            if event.key == pygame.K_c: cColor = 5
-            if event.key == pygame.K_o: cColor = 2
-            if event.key == pygame.K_p: cColor = 7
-            if event.key == pygame.K_e: cColor = 9
+            if event.key == pygame.K_n: cColor = 1
+            if event.key == pygame.K_r: cColor = 0
+            if event.key == pygame.K_g: cColor = 6
+            if event.key == pygame.K_b: cColor = 4
+            if event.key == pygame.K_y: cColor = 8
+            if event.key == pygame.K_m: cColor = 3
+            if event.key == pygame.K_c: cColor = 2
+            if event.key == pygame.K_o: cColor = 5
+            if event.key == pygame.K_p: cColor = 9
+            if event.key == pygame.K_e: cColor = 7
             if event.key == pygame.K_s: smooth = not smooth
             if event.key == pygame.K_x: outline = not outline
             if event.key == pygame.K_w: rando = not rando
@@ -310,11 +310,11 @@ while running:
             pygame.draw.rect(screen, ((lr+wr)*brightness//100, (lg+wg)*brightness//100, (lb+wb)*brightness//100),
                              (x * pixlex + border+offset, y * pixley + border, pixlex - border, pixley - border))
 
-        if brightnessc < brightness: brightnessc += FPSc*2
+        if brightnessc < brightness: brightnessc += FPSc*3.1415
         if brightnessc > brightness: brightnessc = brightness
     pygame.display.flip()
     frame += 1
     mousedown = False
-    if frame == 32767: frame = 1
+    if frame == 32767: frame = 32767
     clock.tick(60)
 pygame.quit()
